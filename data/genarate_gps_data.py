@@ -14,29 +14,14 @@ place_name = "Ho Chi Minh City, Vietnam"
 network_type = "drive"  # Mạng lưới đường cho xe cơ giới
 min_speed_kmh = 20  # Tốc độ giả định tối thiểu (km/h)
 max_speed_kmh = 50  # Tốc độ giả định tối đa (km/h)
-sampling_interval_seconds = 10  # Khoảng thời gian lấy mẫu GPS (giây)
+sampling_interval_seconds = 20  # Khoảng thời gian lấy mẫu GPS (giây)
 gps_noise_meters = 10  # Mức độ nhiễu GPS giả định (mét)
 
 # Điểm bắt đầu và kết thúc
-data_points = [
-(10.845306, 106.793666, 10.860751, 106.792625),
-
-(10.856011, 106.813550, 10.870027, 106.806162),
-
-(10.842060, 106.769553, 10.873523, 106.802471),
-
-(10.877208, 106.811755, 10.871992, 106.824772),
-
-(10.849197, 106.809663, 10.840847, 106.809663),
-
-(10.849338, 106.774208, 10.844738, 106.791580),
-
-(10.844661, 106.780936, 10.853051, 106.791900),
-
-(10.849533, 106.814137, 10.841434, 106.829071),
-
-(10.844792, 106.817764, 10.847735, 106.838624)
-]  # (lat1, lon1, lat2, lon2) 
+csv_file = 'bus_route_segments.csv'
+df = pd.read_csv(csv_file)
+data_points = [(row['lat1'], row['lon1'], row['lat2'], row['lon2']) for _, row in df.iterrows()]
+# (lat1, lon1, lat2, lon2) 
 
 # Đường dẫn để lưu và tải đồ thị
 graph_file = "hcmc_graph.graphml"

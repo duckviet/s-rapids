@@ -43,15 +43,28 @@ def create_district_layer(districts):
     )
 
 def create_gps_layer(gps_data):
-    # Tạo layer cho các điểm GPS
+    # Group data by trip_id and create path coordinates
+    trip_paths = []
+    for trip_id in gps_data['trip_id'].unique():
+        trip_points = gps_data[gps_data['trip_id'] == trip_id]
+        # Create path coordinates for this trip
+        path = trip_points[['longitude', 'latitude']].values.tolist()
+        if len(path) > 1:  # Only add paths with more than one point
+            trip_paths.append({
+                'trip_id': str(trip_id),  # Convert to string to ensure JSON serialization
+                'path': path
+            })
+    
+    # Create layer for GPS paths
     return pdk.Layer(
-        "ScatterplotLayer",
-        data=gps_data,
-        get_position=['longitude', 'latitude'],
-        get_radius=50,
-        get_fill_color=[0, 0, 255, 180],  # Blue with some transparency
+        "PathLayer",
+        data=trip_paths,
+        get_path="path",
+        get_color=[0, 0, 255, 180],  # Blue with some transparency
+        get_width=3,
         pickable=True,
         auto_highlight=True,
+        highlight_color=[255, 0, 0, 180],  # Red highlight when hovered
     )
 
 def create_heatmap_layer(gps_data):
@@ -122,11 +135,11 @@ def main():
         ]
         layers.append(heatmap_layer)
     
-    # Set initial view state (centered on HCMC)
+    # Set initial view state (centered on Q9, HCMC)
     view_state = pdk.ViewState(
-        latitude=10.7756587,  # Center of HCMC
-        longitude=106.7004238,
-        zoom=10,
+        latitude=10.833755,
+        longitude=106.818759,
+        zoom=13.5,
         pitch=0,
     )
     
