@@ -42,5 +42,5 @@ if __name__ == "__main__":
     print("\n=== Kiểm tra phiên bản CUDA ===")
     check_cuda_version()
     print("\n=== Kiểm tra phiên bản RAPIDS ===")
-    for lib in ["cudf", "cugraph", "cuspatial", "cupy", "rmm"]:
+    for lib in ["cudf", "cuml", "cugraph", "cuspatial", "cupy", "rmm"]:
         check_module_version(lib)
