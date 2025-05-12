@@ -42,7 +42,7 @@ def get_bus_stops_osm(place_name, distance=5000):
         return []
 
 # Ví dụ: Lấy trạm xe buýt ở TP.HCM
-place_name = "Long Thanh My, Thu Duc, Ho Chi Minh City, Vietnam"
+place_name = "Ho Chi Minh City, Vietnam"
 bus_stops = get_bus_stops_osm(place_name)
 
 # In kết quả
@@ -51,5 +51,5 @@ for stop in bus_stops:
 
 # Lưu vào file CSV
 df = pd.DataFrame(bus_stops)
-df.to_csv('bus_stops_osm.csv', index=False)
+df.to_csv('bus_stops_osm_full.csv', index=False)
  

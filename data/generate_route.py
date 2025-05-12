@@ -1,5 +1,8 @@
-import pandas as pd
+import cudf as cd  # Sử dụng cudf thay vì pandas
 import random
+import osmnx as ox
+import geopandas as gpd  # Vẫn cần cho osmnx
+import pandas as pd  # Có thể cần để chuyển đổi nếu osmnx yêu cầu
 
 def create_random_bus_routes(csv_file, num_routes=150, min_stops=3, max_stops=10):
     """
@@ -9,11 +12,11 @@ def create_random_bus_routes(csv_file, num_routes=150, min_stops=3, max_stops=10
     min_stops: Số trạm tối thiểu trên mỗi tuyến
     max_stops: Số trạm tối đa trên mỗi tuyến
     """
-    # Đọc file CSV
-    df = pd.read_csv(csv_file)
+    # Đọc file CSV bằng cudf để tăng tốc
+    df = cd.read_csv(csv_file)
     
-    # Lấy danh sách tất cả trạm
-    bus_stops = df[['name', 'latitude', 'longitude']].to_dict('records')
+    # Chuyển đổi sang list để sử dụng random.sample
+    bus_stops = df[['name', 'latitude', 'longitude']].to_pandas().to_dict('records')
     
     # Mảng chứa các tuple (lat1, lon1, lat2, lon2)
     segments = []
@@ -23,7 +26,7 @@ def create_random_bus_routes(csv_file, num_routes=150, min_stops=3, max_stops=10
         # Random số lượng trạm cho tuyến này
         num_stops = random.randint(min_stops, max_stops)
         
-        # Random chọn các trạm (không lặp lại)
+        # Random chọn các trạm (không lặp lại) - vẫn dùng random vì cudf không hỗ trợ
         selected_stops = random.sample(bus_stops, k=min(num_stops, len(bus_stops)))
         
         # Tạo các đoạn tuyến (lat1, lon1, lat2, lon2) từ các trạm liên tiếp
@@ -38,20 +41,18 @@ def create_random_bus_routes(csv_file, num_routes=150, min_stops=3, max_stops=10
             )
             segments.append(segment)
     
-    return segments
+    # Chuyển segments thành cudf DataFrame để trả về
+    return cd.DataFrame(segments, columns=['lat1', 'lon1', 'lat2', 'lon2'])
 
 # Đường dẫn đến file CSV
-csv_file = 'bus_stops_osm.csv'
+csv_file = 'bus_stops_osm_full.csv'
 
-# Tạo các tuyến xe buýt ngẫu nhiên và lấy mảng segments
-segments = create_random_bus_routes(csv_file, num_routes=200, min_stops=3, max_stops=5)
+# Tạo các tuyến xe buýt ngẫu nhiên và lấy DataFrame segments
+segments_df = create_random_bus_routes(csv_file, num_routes=2000, min_stops=3, max_stops=5)
 
-# In kết quả
+# In kết quả (chuyển sang pandas để in dễ dàng, vì cudf có thể không hiển thị tốt)
 print("Mảng các tuple (lat1, lon1, lat2, lon2):")
-for segment in segments:
-    print(segment)
+print(segments_df.to_pandas().head())  # In vài hàng đầu
 
-# (Tùy chọn) Lưu vào file CSV nếu cần
-import pandas as pd
-df_segments = pd.DataFrame(segments, columns=['lat1', 'lon1', 'lat2', 'lon2'])
-df_segments.to_csv('bus_route_segments.csv', index=False)
+# (Tùy chọn) Lưu vào file CSV
+segments_df.to_pandas().to_csv('bus_route_segments_full.csv', index=False)  # Chuyển sang pandas để lưu

@@ -8,10 +8,14 @@ from haversine import haversine
 import numpy as np
 
 def load_gps_data(file_path):
-    """Đọc dữ liệu GPS từ file CSV"""
-    df = pd.read_csv(file_path)
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    return df
+    """Đọc dữ liệu GPS từ file CSV bằng cudf"""
+    # Đọc file CSV bằng cudf
+    df = cudf.read_csv(file_path)
+    
+    # Chuyển đổi cột 'timestamp' sang kiểu datetime bằng cudf
+    df['timestamp'] = cudf.to_datetime(df['timestamp'])
+    
+    return df.to_pandas()
 
 def calculate_trip_metrics_traditional(gps_data):
     """Tính toán metrics sử dụng phương pháp thông thường (pandas + haversine)"""

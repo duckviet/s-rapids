@@ -1,3 +1,4 @@
 cache/
 data/**/*.graphml
-data/fake_hcmc_road_gps_data.csv
+data/**/*.csv
+**/*.pyc
