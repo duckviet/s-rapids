@@ -7,7 +7,7 @@ import cuml
 import geopandas as gpd
 from shapely.geometry import Point
 
-def create_movement_graph(gps_data, eps=0.01, min_samples=5):
+def create_movement_graph(gps_data, eps=0.1, min_samples=5):
     """Tạo đồ thị di chuyển từ dữ liệu GPS"""
     # Tạo GeoDataFrame (giữ nguyên vì cần cho geospatial)
     geometry = [Point(xy) for xy in zip(gps_data['longitude'], gps_data['latitude'])]

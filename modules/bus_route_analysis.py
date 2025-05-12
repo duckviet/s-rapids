@@ -1,49 +1,65 @@
+import streamlit as st
+import pydeck as pdk
 import cudf
-import cuspatial
 import geopandas as gpd
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, Polygon, MultiPolygon
 import numpy as np
+import pandas as pd
 
+# Hàm từ modules.bus_route_analysis
 def create_point_in_polygon_index(districts):
-    """Create a spatial index for point-in-polygon queries"""
-    # Convert districts to cuSpatial format
-    district_polygons = []
-    district_names = []
+    """Create a spatial index for point-in-polygon queries using GeoPandas"""
+    # Chuyển dữ liệu districts["level2s"] thành GeoDataFrame
+    districts_gdf = gpd.GeoDataFrame(districts["level2s"])
     
-    # Process each district from the GeoJSON structure
-    for district in districts["level2s"]:
-        for polygon in district["coordinates"]:
-            # Convert coordinates to the format expected by cuSpatial
-            coords = np.array(polygon[0])  # Get the first ring of coordinates
-            # Create polygon array with proper structure
-            polygon_array = np.array([coords])
-            district_polygons.append(polygon_array)
-            district_names.append(district["name"])
-    
-    return district_polygons, district_names
-
-def find_district_for_point(point, district_polygons, district_names):
-    """Find which district a point belongs to"""
-    # Convert point to numpy array format expected by cuSpatial
-    points = np.array([[point.x, point.y]])
-    
-    # Check each polygon
-    for i, polygon in enumerate(district_polygons):
-        try:
-            # Use cuSpatial's point_in_polygon with properly formatted data
-            result = cuspatial.point_in_polygon(points, polygon)
-            if result[0]:  # If point is in polygon
-                return district_names[i]
-        except Exception as e:
-            print(f"Error checking polygon {i}: {e}")
+    # Chuyển đổi coordinates thành Polygon hoặc MultiPolygon
+    geometries = []
+    for coords in districts_gdf['coordinates']:
+        # Kiểm tra cấu trúc của coords để xác định Polygon hay MultiPolygon
+        # Nếu coords[0][0][0] là số (float/int), thì đây là Polygon (một vòng duy nhất)
+        # Nếu coords[0][0][0] là danh sách, thì đây là MultiPolygon (nhiều vòng hoặc nhiều phần)
+        if len(coords) == 0:
+            # Trường hợp không có tọa độ, gán None
+            geometries.append(None)
             continue
+        
+        if isinstance(coords[0][0][0], (int, float)):
+            # Đây là Polygon: coords là [[[...]]]
+            outer_ring = coords[0]
+            geometries.append(Polygon(outer_ring))
+        else:
+            # Đây là MultiPolygon: coords là [[[ [...], ... ], ...]]
+            polygons = []
+            for poly in coords:
+                # Mỗi poly là một Polygon, lấy vòng đầu tiên (outer ring)
+                outer_ring = poly[0]  # Lấy vòng đầu tiên (bỏ qua các lỗ nếu có)
+                polygons.append(Polygon(outer_ring))
+            geometries.append(MultiPolygon(polygons))
     
+    districts_gdf['geometry'] = geometries
+    
+    # In thông tin để kiểm tra
+    # st.write(f"Số quận được tải: {len(districts_gdf)}")
+    # st.write("Tên các quận:", districts_gdf['name'].tolist())
+    # st.write("Cấu trúc coordinates mẫu (5 quận đầu tiên):")
+    # st.write(districts_gdf[['name', 'coordinates']].head().to_dict())
+    
+    return districts_gdf
+
+def find_district_for_point(point, districts_gdf):
+    """Find which district a point belongs to using GeoPandas"""
+    for idx, row in districts_gdf.iterrows():
+        # Bỏ qua nếu geometry là None
+        if row['geometry'] is None:
+            continue
+        if row['geometry'].contains(point):
+            return row['name']
     return "Unknown"
 
 def analyze_bus_routes(gps_data, districts):
     """Analyze bus routes and determine their districts"""
-    # Create spatial index
-    district_polygons, district_names = create_point_in_polygon_index(districts)
+    # Tạo spatial index bằng GeoPandas
+    districts_gdf = create_point_in_polygon_index(districts)
     
     # Convert GPS data to cuDF if it's not already
     if not isinstance(gps_data, cudf.DataFrame):
@@ -67,12 +83,16 @@ def analyze_bus_routes(gps_data, districts):
     # Convert to pandas for iteration
     trip_points_pd = trip_points.to_pandas()
     
+    # Kiểm tra một số tọa độ GPS
+    st.write("Tọa độ GPS mẫu (5 dòng đầu):")
+    st.write(trip_points_pd.head())
+    
     for _, row in trip_points_pd.iterrows():
         start_point = Point(row['longitude_first'], row['latitude_first'])
         end_point = Point(row['longitude_last'], row['latitude_last'])
         
-        start_district = find_district_for_point(start_point, district_polygons, district_names)
-        end_district = find_district_for_point(end_point, district_polygons, district_names)
+        start_district = find_district_for_point(start_point, districts_gdf)
+        end_district = find_district_for_point(end_point, districts_gdf)
         
         route_analysis.append({
             'trip_id': row['trip_id'],
@@ -102,3 +122,5 @@ def get_route_summary(route_analysis):
     district_pairs = district_pairs.sort_values('route_count', ascending=False)
     
     return district_pairs
+
+ 

@@ -1,4 +1,4 @@
 cache/
 data/**/*.graphml
-data/**/*.csv
+# data/**/*.csv
 **/*.pyc

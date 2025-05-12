@@ -1,7 +1,7 @@
 import streamlit as st
-from modules.gps_analysis import calculate_trip_metrics_cuspatial
+from modules.gps_analysis import calculate_trip_metrics_cudf
 
-def render_gps_analysis_tab(gps_data):
+def render_gps_analysis_tab(gps_data, file_path):
     """Render tab phân tích GPS"""
     # Sidebar controls for GPS analysis
     st.sidebar.subheader("Phân tích GPS")
@@ -9,7 +9,7 @@ def render_gps_analysis_tab(gps_data):
     
     # Tính toán và hiển thị các chỉ số của chuyến đi
     st.subheader("Phân tích chuyến đi")
-    trip_metrics, _ = calculate_trip_metrics_cuspatial(gps_data)
+    trip_metrics, _ = calculate_trip_metrics_cudf(file_path)
     st.dataframe(trip_metrics)
     
     # Hiển thị biểu đồ tốc độ trung bình

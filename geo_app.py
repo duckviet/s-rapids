@@ -1,20 +1,21 @@
 import streamlit as st
-import json
 import pydeck as pdk
-import numpy as np
-import pandas as pd
-import cuspatial
-import geopandas as gpd
-from shapely.geometry import Point
-import datetime
-import time
-from haversine import haversine
-from modules.gps_analysis import load_gps_data
+import cudf
 from modules.map_utils import load_geojson, create_district_layer, create_gps_layer, create_heatmap_layer
 from components.gps_analysis_tab import render_gps_analysis_tab
 from components.performance_comparison_tab import render_performance_comparison_tab
 from components.graph_analysis_tab import render_graph_analysis_tab
 from components.bus_route_analysis_tab import render_bus_route_analysis_tab
+
+def load_gps_data(file_path):
+    """Đọc dữ liệu GPS từ file CSV bằng cudf"""
+    # Đọc file CSV bằng cudf
+    df = cudf.read_csv(file_path)
+    
+    # Chuyển đổi cột 'timestamp' sang kiểu datetime bằng cudf
+    df['timestamp'] = cudf.to_datetime(df['timestamp'])
+    
+    return df.to_pandas()
 
 def create_district_layer(districts):
     # Create a list to store polygon data
@@ -87,7 +88,7 @@ def create_heatmap_layer(gps_data):
     )
 
 def main():
-    st.title("Phân tích dữ liệu GPS với cuSpatial và cuGraph")
+    st.title("Phân tích dữ liệu GPS với cuDf, cuSpatial và cuGraph")
     
     # Sidebar configuration
     st.sidebar.title("Cài đặt")
@@ -171,19 +172,15 @@ def main():
     st.write(f"Tổng số chuyến đi: {gps_data['trip_id'].nunique()}")
     
     # Tạo tabs cho các phân tích khác nhau
-    tab1, tab2,   tab4 = st.tabs([ "So sánh hiệu suất", "Phân tích GPS", "Phân tích tuyến xe buýt"])
+    tab1, tab2, tab3 = st.tabs([ "So sánh hiệu suất", "Phân tích đồ thị", "Phân tích tuyến xe buýt"])
     
     with tab1:
-        render_performance_comparison_tab(gps_data)
-        
+        render_performance_comparison_tab("data/fake_hcmc_road_gps_data_full.csv")
     
     with tab2:
-        render_gps_analysis_tab(gps_data)
+        render_graph_analysis_tab(gps_data)
     
-    # with tab3: "Phân tích đồ thị", 
-    #     render_graph_analysis_tab(gps_data)
-    
-    with tab4:
+    with tab3:
         render_bus_route_analysis_tab(gps_data, districts, layers, deck)
 
 if __name__ == "__main__":

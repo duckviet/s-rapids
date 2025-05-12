@@ -11,3 +11,4 @@ geopandas==1.0.1
 pydeck==0.9.1
 shapely==2.1.0
 haversine==2.9.0
+streamlit==1.45.0
