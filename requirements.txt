@@ -1,0 +1,13 @@
+torch==2.6.0
+cudf==25.02.02
+cuml==25.02.01
+cugraph==25.02.00
+cuspatial==25.02.00
+cupy==13.4.1
+rmm==25.02.00
+pandas==2.2.3
+numpy==2.0.2
+geopandas==1.0.1
+pydeck==0.9.1
+shapely==2.1.0
+haversine==2.9.0
